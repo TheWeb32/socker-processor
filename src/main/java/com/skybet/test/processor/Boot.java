@@ -1,11 +1,25 @@
 package com.skybet.test.processor;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import org.bson.Document;
 
 import com.google.gson.GsonBuilder;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
+import com.skybet.test.beans.Event;
+import com.skybet.test.beans.Market;
+import com.skybet.test.beans.Outcome;
 import com.skybet.test.errors.ConfigException;
 import com.skybet.test.model.Modalities;
 import com.skybet.test.services.impl.AdvancedSaveMessageServiceImpl;
@@ -15,7 +29,7 @@ import com.skybet.test.services.impl.IntermediateSaveMessageServiceImpl;
 public class Boot {
 	
 	private static Logger log = Logger.getLogger(Boot.class.getCanonicalName());
-
+	
 	public static void main(String[] args) throws UnknownHostException, IOException {
     	try {
 			Config.PROCESSOR_MODE = System.getenv("PROCESSOR_MODE");
@@ -38,6 +52,7 @@ public class Boot {
     	}catch (Exception e) {
     		throw new ConfigException("Not all env vars present", e);
 		}
+		initializeDB();
 		log.log(Level.INFO, "Processor started");
 		Processor processor = new Processor();
 	    GsonBuilder gsonBuilder = new GsonBuilder();
@@ -52,9 +67,6 @@ public class Boot {
 		case Modalities.ADVANCED:
 			processor.setSaveMessageService(new AdvancedSaveMessageServiceImpl(gsonBuilder.create()));
 			break;
-		case Modalities.ADDITIONAL:
-			
-			break;
 		default:
 			log.log(Level.SEVERE, "Invalid mode: " + Config.PROCESSOR_MODE);
 			return;
@@ -68,6 +80,45 @@ public class Boot {
 			}
 			log.log(Level.INFO, "Provider Reconnection attempt");
 		}
+	}
+	
+	private static void initializeDB() {
+		MongoClient client = null;
+		try {
+			client = getMongoDBConnection();
+			MongoDatabase db = client.getDatabase(Config.MONGODB_DB);
+			MongoIterable<String> coll = db.listCollectionNames();
+			for(String collName : coll) {
+				if(Event.class.getCanonicalName().equals(collName))
+					return;
+				if(Market.class.getCanonicalName().equals(collName))
+					return;
+				if(Outcome.class.getCanonicalName().equals(collName))
+					return;
+			}
+			InputStream inputStream = null;
+			try {
+				inputStream = Boot.class.getResourceAsStream("/com/skybet/test/configs/skybet.schema.js");
+				String jsStr = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+				db.runCommand(new Document("$eval", jsStr));
+			}finally {
+				if(client != null)
+					client.close();
+			}
+		}catch (Exception e) {
+			throw new ConfigException("Impossible to initialize MongoDB", e);
+		}finally {
+			if(client != null)
+				client.close();
+		}
+	}
+	
+	private static MongoClient getMongoDBConnection() {
+		MongoClientOptions.Builder optionsBuilder = new MongoClientOptions.Builder();
+		optionsBuilder.maxWaitTime(Integer.MAX_VALUE);
+		optionsBuilder.connectTimeout(Integer.MAX_VALUE);
+		optionsBuilder.socketTimeout(Integer.MAX_VALUE);
+		return new MongoClient(new ServerAddress(Config.MONGODB_HOST, Config.MONGODB_PORT));
 	}
 
 }
