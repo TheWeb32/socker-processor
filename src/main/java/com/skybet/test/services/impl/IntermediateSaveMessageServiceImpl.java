@@ -30,7 +30,7 @@ public class IntermediateSaveMessageServiceImpl implements SaveMessageService {
 	}
 
 	private MongoClient getMongoDBConnection() {
-		MongoCredential credential = MongoCredential.createScramSha1Credential(Config.MONGODB_USER, Config.MONGODB_HOST, Config.MONGODB_PASS.toCharArray());
+		MongoCredential credential = MongoCredential.createScramSha1Credential(Config.MONGODB_USER, Config.MONGODB_DB, Config.MONGODB_PASS.toCharArray());
 		MongoClientOptions.Builder optionsBuilder = new MongoClientOptions.Builder();
 		optionsBuilder.maxWaitTime(Integer.MAX_VALUE);
 		optionsBuilder.connectTimeout(Integer.MAX_VALUE);
