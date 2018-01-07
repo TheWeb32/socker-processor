@@ -1,4 +1,3 @@
-use skybet
 db.createUser(
   {
     user: "user",
