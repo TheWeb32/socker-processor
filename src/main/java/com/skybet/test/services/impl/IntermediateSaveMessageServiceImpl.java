@@ -30,13 +30,13 @@ public class IntermediateSaveMessageServiceImpl implements SaveMessageService {
 	}
 
 	private MongoClient getMongoDBConnection() {
-		MongoCredential credential = MongoCredential.createScramSha1Credential("user", "skybet", "12345678C".toCharArray());
+		MongoCredential credential = MongoCredential.createScramSha1Credential(Config.MONGODB_USER, Config.MONGODB_HOST, Config.MONGODB_PASS.toCharArray());
 		MongoClientOptions.Builder optionsBuilder = new MongoClientOptions.Builder();
 		optionsBuilder.maxWaitTime(Integer.MAX_VALUE);
 		optionsBuilder.connectTimeout(Integer.MAX_VALUE);
 		optionsBuilder.socketTimeout(Integer.MAX_VALUE);
 		MongoClientOptions options = optionsBuilder.build();
-		return new MongoClient(new ServerAddress(Config.PROVIDER_HOST, Config.PROVIDER_DB_PORT), credential, options);
+		return new MongoClient(new ServerAddress(Config.MONGODB_HOST, Config.MONGODB_PORT), credential, options);
 	}
 
 	private Document message2Document(Message message) {

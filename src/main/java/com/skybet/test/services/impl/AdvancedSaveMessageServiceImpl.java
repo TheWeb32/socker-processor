@@ -39,12 +39,11 @@ public class AdvancedSaveMessageServiceImpl implements SaveMessageService {
 
 	private Connection getRabbitMQConnection() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setUsername("rabbitmq");
-        factory.setPassword("rabbitmq");
-        factory.setVirtualHost("/feedme");
-        factory.setHost(Config.PROVIDER_HOST);
-        factory.setPort(Config.PROVIDER_RABBITMQ_PORT);
-        factory.setHost(Config.PROVIDER_HOST);
+        factory.setUsername(Config.RABBITMQ_DEFAULT_USER);
+        factory.setPassword(Config.RABBITMQ_DEFAULT_PASS);
+        factory.setVirtualHost(Config.RABBITMQ_DEFAULT_VHOST);
+        factory.setHost(Config.RABBITMQ_HOST);
+        factory.setPort(Config.RABBITMQ_PORT);
         return factory.newConnection();
 	}
 

@@ -2,11 +2,11 @@ package com.skybet.test.processor;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.GsonBuilder;
+import com.skybet.test.errors.ConfigException;
 import com.skybet.test.model.Modalities;
 import com.skybet.test.services.impl.AdvancedSaveMessageServiceImpl;
 import com.skybet.test.services.impl.BasicSaveMessageServiceImpl;
@@ -17,21 +17,28 @@ public class Boot {
 	private static Logger log = Logger.getLogger(Boot.class.getCanonicalName());
 
 	public static void main(String[] args) throws UnknownHostException, IOException {
-		if(args.length >= 3) {
-			Config.PROVIDER_HOST = args[0];
-			Config.PROVIDER_DATA_PORT = Integer.parseInt(args[1]);
-			Config.PROCESSOR_MODE = args[2];
-			if(Modalities.INTERMEDIATE.equals(Config.PROCESSOR_MODE)) {
-				Config.PROVIDER_DB_PORT = Integer.parseInt(args[3]);
-			}
-			if(Modalities.ADVANCED.equals(Config.PROCESSOR_MODE)) {
-				Config.PROVIDER_RABBITMQ_PORT = Integer.parseInt(args[3]);
-			}
-		}else {
-			log.log(Level.SEVERE, "No arguments passed. Insert provider host with port and choose a mode betweens: basic, intermediate, advanced, additional");
-			return;
+    	try {
+			Config.PROCESSOR_MODE = System.getenv("PROCESSOR_MODE");
+        	log.log(Level.INFO, "Setted as Processor Mode: " + Config.PROCESSOR_MODE);
+			Config.PROVIDER_HOST = System.getenv("PROVIDER_HOST");
+			Config.PROVIDER_PORT = Integer.parseInt(System.getenv("PROVIDER_PORT"));
+        	log.log(Level.INFO, "Setted as Provider address: " + Config.PROVIDER_HOST + ":" + Config.PROVIDER_PORT);
+			Config.RABBITMQ_HOST = System.getenv("RABBITMQ_DEFAULT_HOST");
+			Config.RABBITMQ_PORT = Integer.parseInt(System.getenv("RABBITMQ_DEFAULT_PORT"));
+			Config.RABBITMQ_DEFAULT_USER = System.getenv("RABBITMQ_DEFAULT_USER");
+			Config.RABBITMQ_DEFAULT_PASS = System.getenv("RABBITMQ_DEFAULT_PASS");
+			Config.RABBITMQ_DEFAULT_VHOST = System.getenv("RABBITMQ_DEFAULT_VHOST");
+        	log.log(Level.INFO, "Setted as RabbitMQ address: " + Config.RABBITMQ_HOST + ":" + Config.RABBITMQ_PORT);
+			Config.MONGODB_HOST = System.getenv("MONGODB_HOST");
+			Config.MONGODB_PORT = Integer.parseInt(System.getenv("MONGODB_PORT"));
+			Config.MONGODB_USER = System.getenv("MONGODB_USER");
+			Config.MONGODB_PASS = System.getenv("MONGODB_PASS");
+			Config.MONGODB_DB = System.getenv("MONGODB_DB");
+        	log.log(Level.INFO, "Setted as MongoDB address: " + Config.MONGODB_HOST + ":" + Config.MONGODB_PORT);
+    	}catch (Exception e) {
+    		throw new ConfigException("Not all env vars present", e);
 		}
-		log.log(Level.INFO, "Processor started with arguments: " + Arrays.asList(args));
+		log.log(Level.INFO, "Processor started");
 		Processor processor = new Processor();
 	    GsonBuilder gsonBuilder = new GsonBuilder();
 	    gsonBuilder.setDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -53,7 +60,7 @@ public class Boot {
 			return;
 		}
 		while(true) {
-			processor.connect(Config.PROVIDER_HOST, Config.PROVIDER_DATA_PORT);
+			processor.connect(Config.PROVIDER_HOST, Config.PROVIDER_PORT);
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e1) {
