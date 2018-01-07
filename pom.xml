@@ -30,12 +30,6 @@
 					</executions>
 					<configuration>
 						<mainClass>com.skybet.test.processor.Boot</mainClass>
-						<arguments>
-							<argument>192.168.1.234</argument>
-							<argument>8282</argument>
-							<argument>advanced</argument>
-							<argument>5672</argument>
-						</arguments>
 					</configuration>
 				</plugin>
 			</plugins>
